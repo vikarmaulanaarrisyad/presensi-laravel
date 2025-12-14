@@ -1,4 +1,4 @@
-@extends('layouts.presensi');
+@extends('layouts.presensi.app');
 
 @section('content')
     <div class="section" id="user-section">

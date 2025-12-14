@@ -16,6 +16,8 @@
 <!-- Base Js File -->
 <script src="{{ asset('e-presensi') }}/assets/js/base.js"></script>
 
+@stack('script_vendor')
+@stack('scripts')
 <script>
     am4core.ready(function() {
 
