@@ -13,10 +13,15 @@
 <script src="https://cdn.amcharts.com/lib/4/core.js"></script>
 <script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
 <script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script>
+
+<!-- sweetalert2 -->
+<script src="{{ asset('/AdminLTE/plugins/sweetalert2/sweetalert2.all.min.js') }}"></script>
+<script src="{{ asset('AdminLTE/plugins/toastr/toastr.min.js') }}"></script>
+@stack('script_vendor')
+
 <!-- Base Js File -->
 <script src="{{ asset('e-presensi') }}/assets/js/base.js"></script>
 
-@stack('script_vendor')
 @stack('scripts')
 <script>
     am4core.ready(function() {

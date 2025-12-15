@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->date('tgl_presensi');
-            $table->time('jam_in');
-            $table->time('jam_out');
+            $table->time('jam_in')->nullable();
+            $table->time('jam_out')->nullable();
             $table->string('foto_in')->default('foto_in.png');
             $table->string('foto_out')->default('foto_out.png');
             $table->text('location')->nullable();
