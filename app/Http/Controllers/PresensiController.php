@@ -53,9 +53,40 @@ class PresensiController extends Controller
         // =====================
         // DATA DASAR
         // =====================
-        $userId       = Auth::id();
-        $tglPresensi  = date('Y-m-d');
-        $jamSekarang  = date('H:i:s');
+        $userId      = Auth::id();
+        $tglPresensi = date('Y-m-d');
+        $jamSekarang = date('H:i:s');
+
+        // 🔹 Koordinat kantor (CONTOH)
+        $latitudeKantor  = -7.123456;
+        $longitudeKantor = 110.123456;
+
+        // 🔹 Lokasi user
+        $lokasiUser    = explode(",", $request->lokasi);
+        $latitudeUser  = $lokasiUser[0];
+        $longitudeUser = $lokasiUser[1];
+
+        // =====================
+        // HITUNG JARAK
+        // =====================
+        $jarak  = $this->distance(
+            $latitudeKantor,
+            $longitudeKantor,
+            $latitudeUser,
+            $longitudeUser
+        );
+
+        $radiusUser = round($jarak['meters']); // jarak user (meter)
+        $radiusMax  = 100; // batas radius (meter)
+
+        // ❌ Jika di luar radius
+        if ($radiusUser > $radiusMax) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anda berada di luar radius absensi',
+                'jarak'   => $radiusUser . ' meter'
+            ], 403);
+        }
 
         // =====================
         // CEK PRESENSI HARI INI
@@ -69,7 +100,6 @@ class PresensiController extends Controller
         // =====================
         if ($presensi) {
 
-            // Cegah absen keluar dobel
             if ($presensi->jam_out) {
                 return response()->json([
                     'message' => 'Anda sudah melakukan absensi pulang hari ini.'
@@ -115,8 +145,6 @@ class PresensiController extends Controller
         ]);
     }
 
-
-
     /**
      * Display the specified resource.
      */
@@ -147,5 +175,20 @@ class PresensiController extends Controller
     public function destroy(Presensi $presensi)
     {
         //
+    }
+
+    //Menghitung Jarak
+    function distance($lat1, $lon1, $lat2, $lon2)
+    {
+        $theta = $lon1 - $lon2;
+        $miles = (sin(deg2rad($lat1)) * sin(deg2rad($lat2))) + (cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta)));
+        $miles = acos($miles);
+        $miles = rad2deg($miles);
+        $miles = $miles * 60 * 1.1515;
+        $feet = $miles * 5280;
+        $yards = $feet / 3;
+        $kilometers = $miles * 1.609344;
+        $meters = $kilometers * 1000;
+        return compact('meters');
     }
 }
