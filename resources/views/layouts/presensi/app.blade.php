@@ -23,13 +23,19 @@
     <!-- SweetAler2 -->
     <link rel="stylesheet" href="{{ asset('/AdminLTE/plugins/sweetalert2/sweetalert2.min.css') }}">
     <link rel="stylesheet" href="{{ asset('AdminLTE/plugins/toastr/toastr.min.css') }}">
+
+    <style>
+        #user-section {
+            background-color: #47b220 !important;
+        }
+    </style>
 </head>
 
 <body style="background-color:#e9ecef;">
 
     <!-- loader -->
     <div id="loader">
-        <div class="spinner-border text-primary" role="status"></div>
+        <div class="spinner-border text-success" role="status"></div>
     </div>
     <!-- * loader -->
 

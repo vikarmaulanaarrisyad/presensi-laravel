@@ -147,7 +147,7 @@
                             showConfirmButton: false
                         }).then(() => {
                             window.location.href = response.redirect ??
-                                '{{ route('presensi.create') }}';
+                                '{{ route('dashboard') }}';
                         });
                     },
 
@@ -175,61 +175,3 @@
         });
     </script>
 @endpush
-
-{{--
-            $('#takeabsen').click(function(e) {
-                $('#takeabsen').prop('disabled', true);
-                Swal.fire({
-                    title: 'Menyimpan Postingan...',
-                    text: 'Mohon tunggu sebentar.',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading()
-                });
-
-                Webcam.snap(function(uri) {
-                    image = uri;
-                });
-
-                let lokasi = $('#lokasi').val();
-
-                $.ajax({
-                    type: 'POST',
-                    url: '{{ route('presensi.store') }}',
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        image: image,
-                        lokasi: lokasi
-                    },
-                    cache: false,
-                    success: function(response) {
-                        Swal.close();
-
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil!',
-                            text: response.message || 'Postingan berhasil disimpan',
-                            timer: 2000,
-                            showConfirmButton: false
-                        }).then(() => {
-                            window.location.href = response.redirect ||
-                                '{{ route('presensi.index') }}';
-                        });
-                    },
-                    error: function(xhr) {
-                        Swal.close();
-                        $('#takeabsen').prop('disabled', false);
-
-                        let msg = xhr.responseJSON?.message || 'Terjadi kesalahan saat menyimpan data.';
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Gagal',
-                            text: msg,
-                            timer: 3000
-                        });
-
-                        if (xhr.status === 422) {
-                            loopErrors(xhr.responseJSON.errors);
-                        }
-                    },
-                })
-            })  --}}

@@ -57,9 +57,9 @@ class PresensiController extends Controller
         $tglPresensi = date('Y-m-d');
         $jamSekarang = date('H:i:s');
 
-        // 🔹 Koordinat kantor (CONTOH)
-        $latitudeKantor  = -7.123456;
-        $longitudeKantor = 110.123456;
+        // 🔹 Koordinat kantor (CONTOH) ,
+        $latitudeKantor  = -6.9211923;
+        $longitudeKantor = 109.1686918;
 
         // 🔹 Lokasi user
         $lokasiUser    = explode(",", $request->lokasi);
@@ -77,7 +77,7 @@ class PresensiController extends Controller
         );
 
         $radiusUser = round($jarak['meters']); // jarak user (meter)
-        $radiusMax  = 100; // batas radius (meter)
+        $radiusMax  = 50000; // batas radius (meter)
 
         // ❌ Jika di luar radius
         if ($radiusUser > $radiusMax) {
