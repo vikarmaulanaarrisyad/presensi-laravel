@@ -22,8 +22,15 @@
 <!-- Base Js File -->
 <script src="{{ asset('e-presensi') }}/assets/js/base.js"></script>
 
+
 @stack('scripts')
 <script>
+    $.ajaxSetup({
+        headers: {
+            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+        },
+    });
+
     am4core.ready(function() {
 
         // Themes begin

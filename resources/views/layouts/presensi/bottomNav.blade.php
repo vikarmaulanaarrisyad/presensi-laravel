@@ -1,19 +1,17 @@
   <div class="appBottomMenu">
-      <a href="{{ route('dashboard') }}" class="item {{ request()->is('/dashboard') ? 'active': '' }}">
+      <a href="{{ route('dashboard') }}" class="item {{ request()->is('/dashboard') ? 'active' : '' }}">
           <div class="col">
-              <ion-icon name="home-outline" role="img" class="md hydrated"
-                  aria-label="home outline"></ion-icon>
+              <ion-icon name="home-outline" role="img" class="md hydrated" aria-label="home outline"></ion-icon>
               <strong>Home</strong>
           </div>
       </a>
-      <a href="#" class="item">
+      <a href="{{ route('presensi.index') }}" class="item {{ request()->is('/presensi') ? 'active' : '' }}">
           <div class="col">
-              <ion-icon name="file-tray-full-outline" role="img" class="md hydrated"
-                  aria-label="file tray full outline"></ion-icon>
-              <strong>Today</strong>
+              <ion-icon name="document-text-outline" role="img" class="md hydrated"></ion-icon>
+              <strong>Histori</strong>
           </div>
       </a>
-    
+
       <a href="{{ route('presensi.create') }}" class="item">
           <div class="col">
               <div class="action-button large">

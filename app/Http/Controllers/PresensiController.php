@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Presensi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -15,7 +16,23 @@ class PresensiController extends Controller
      */
     public function index()
     {
-        //
+        $namaBulan = [
+            "",
+            "Januari",
+            "Februari",
+            "Maret",
+            "April",
+            "Mei",
+            "Juni",
+            "Juli",
+            "Agustus",
+            "September",
+            "Oktober",
+            "November",
+            "Desember"
+        ];
+
+        return view('presensi.index', compact('namaBulan'));
     }
 
     /**
@@ -190,5 +207,25 @@ class PresensiController extends Controller
         $kilometers = $miles * 1.609344;
         $meters = $kilometers * 1000;
         return compact('meters');
+    }
+
+    public function search(Request $request)
+    {
+        // Validasi
+        $request->validate([
+            'bulan' => 'required|numeric|min:1|max:12',
+            'tahun' => 'required|numeric|min:2000'
+        ]);
+
+        $userId = Auth::id();
+
+        // Ambil data presensi
+        $data = Presensi::where('user_id', $userId)
+            ->whereMonth('tgl_presensi', $request->bulan)
+            ->whereYear('tgl_presensi', $request->tahun)
+            ->orderBy('tgl_presensi', 'asc')
+            ->get();
+        // Kembalikan ke view (AJAX)
+        return view('presensi.result', compact('data'));
     }
 }
