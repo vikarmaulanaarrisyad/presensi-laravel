@@ -58,7 +58,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col" id="result-presensi"></div>
+        <div class="col mb-4" id="result-presensi"></div>
     </div>
 @endsection
 
