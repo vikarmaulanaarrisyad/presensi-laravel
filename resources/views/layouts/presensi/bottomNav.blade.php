@@ -19,11 +19,10 @@
               </div>
           </div>
       </a>
-      <a href="#" class="item">
+      <a href="{{ route('pengajuan.izin.index') }}" class="item">
           <div class="col">
-              <ion-icon name="document-text-outline" role="img" class="md hydrated"
-                  aria-label="document text outline"></ion-icon>
-              <strong>Docs</strong>
+              <ion-icon name="calendar-outline" role="img" class="md hydrated"></ion-icon>
+              <strong>Izin</strong>
           </div>
       </a>
       <a href="javascript:;" class="item">

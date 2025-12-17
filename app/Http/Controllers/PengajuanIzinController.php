@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\PengajuanIzin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class PengajuanIzinController extends Controller
 {
@@ -12,7 +15,11 @@ class PengajuanIzinController extends Controller
      */
     public function index()
     {
-        //
+        $data = PengajuanIzin::where('user_id', Auth::id())
+            ->orderBy('tgl_presensi', 'desc')
+            ->get();
+
+        return view('pengajuan.index', compact('data'));
     }
 
     /**
@@ -20,7 +27,7 @@ class PengajuanIzinController extends Controller
      */
     public function create()
     {
-        //
+        return view('pengajuan.create');
     }
 
     /**
@@ -28,7 +35,39 @@ class PengajuanIzinController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'tanggal'     => 'required|date',
+            'jenis_izin'  => 'required|in:izin,sakit',
+            'keterangan'  => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Validasi gagal',
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+
+        // Mapping jenis izin ke ENUM status
+        $status = $request->jenis_izin === 'izin' ? '1' : '2';
+
+        // Simpan data
+        PengajuanIzin::create([
+            'user_id'          => Auth::id(),
+            'kode_izin'        => 'IZ-' . date('Ymd') . '-' . strtoupper(Str::random(4)),
+            'tgl_presensi'     => $request->tanggal,
+            'status'           => $status,
+            'keterangan'       => $request->keterangan,
+            'status_approved'  => '0', // pending
+            'alasan'           => '-'
+        ]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Pengajuan izin berhasil dikirim'
+        ]);
     }
 
     /**
