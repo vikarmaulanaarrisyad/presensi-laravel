@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PengajuanIzin;
 use App\Models\Presensi;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -53,6 +54,18 @@ class DashboardController extends Controller
             ->whereYear('tgl_presensi', $tahunIni)
             ->count();
 
+        $rekapIzin = PengajuanIzin::where('user_id', $userId)
+            ->whereMonth('tgl_presensi', $bulanIni)
+            ->whereYear('tgl_presensi', $tahunIni)
+            ->where('status_approved', '1')
+            ->selectRaw('
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as jumlah_sakit,
+             SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) as jumlah_izin
+        ')->first();
+
+        $jumlahSakit = $rekapIzin->jumlah_sakit;
+        $jumlahIzin  = $rekapIzin->jumlah_izin;
+
         // Jumlah TERLAMBAT bulan ini (jam_in > 07:00)
         $jumlahTerlambat = Presensi::where('user_id', $userId)
             ->whereMonth('tgl_presensi', $bulanIni)
@@ -68,7 +81,9 @@ class DashboardController extends Controller
             'tahunIni',
             'namaBulanIni',
             'jumlahPresensi',
-            'jumlahTerlambat'
+            'jumlahTerlambat',
+            'jumlahSakit',
+            'jumlahIzin'
         ));
     }
 }
