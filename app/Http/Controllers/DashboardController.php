@@ -13,6 +13,7 @@ class DashboardController extends Controller
     public function index()
     {
         $userId = Auth::id();
+        $user = Auth::user();
         $tglSekarang = Carbon::today();
 
         $bulanIni = $tglSekarang->month;
@@ -73,6 +74,10 @@ class DashboardController extends Controller
             ->whereNotNull('jam_in')
             ->whereTime('jam_in', '>', '07:00:00')
             ->count();
+
+        if ($user->hasRole('admin')) {
+            return view('dashboard.admin.index');
+        }
 
         return view('dashboard.user.index', compact(
             'presensiHariIni',

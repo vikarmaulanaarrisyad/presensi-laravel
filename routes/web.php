@@ -11,6 +11,10 @@ Route::get('/', function () {
     return view('auth.user.login');
 });
 
+Route::get('/admin', function () {
+    return view('auth.login');
+});
+
 
 Route::group(['middleware' => ['auth']], function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

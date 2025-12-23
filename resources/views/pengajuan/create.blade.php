@@ -134,11 +134,12 @@
                                     "{{ route('pengajuan.izin.index') }}";
                             });
                         },
-                        error: function() {
+                        error: function(xhr) {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Gagal',
-                                text: 'Terjadi kesalahan, silakan coba lagi'
+                                text: xhr.responseJSON.message ||
+                                    'Terjadi kesalahan, silakan coba lagi'
                             });
                         }
                     });

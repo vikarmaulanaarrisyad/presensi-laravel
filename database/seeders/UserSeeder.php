@@ -13,15 +13,29 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Buat akun user
-        User::query()->updateOrCreate([
-            'email' => 'user@gmail.com',
-        ],
-        [
-            'name' => 'User',
-            'username' => 'user',
-            'password' => bcrypt('password'), // Ganti dengan password yang diinginkan
-        ]  
+        // ADMIN
+        $admin = User::updateOrCreate(
+            ['email' => 'admin@gmail.com'],
+            [
+                'name'     => 'Admin',
+                'username' => 'admin',
+                'password' => bcrypt('password'),
+            ]
         );
+        $admin->assignRole('admin');
+
+        // Buat akun user
+        $user = User::query()->updateOrCreate(
+            [
+                'email' => 'user@gmail.com',
+            ],
+            [
+                'name' => 'User',
+                'username' => 'user',
+                'password' => bcrypt('password'), // Ganti dengan password yang diinginkan
+            ]
+        );
+
+        $user->assignRole('guru');
     }
 }

@@ -42,7 +42,8 @@
                     @csrf
                     <div class="form-group boxed">
                         <div class="input-wrapper">
-                            <input type="email" class="form-control" id="email1" name="email" placeholder="Email address">
+                            <input type="email" class="form-control" id="email1" name="auth"
+                                placeholder="Email address">
                             <i class="clear-input">
                                 <ion-icon name="close-circle"></ion-icon>
                             </i>
@@ -51,7 +52,8 @@
 
                     <div class="form-group boxed">
                         <div class="input-wrapper">
-                            <input type="password" class="form-control" id="password1" name="password" placeholder="Password">
+                            <input type="password" class="form-control" id="password1" name="password"
+                                placeholder="Password">
                             <i class="clear-input">
                                 <ion-icon name="close-circle"></ion-icon>
                             </i>

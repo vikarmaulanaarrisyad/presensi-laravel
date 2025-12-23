@@ -50,14 +50,30 @@ class PengajuanIzinController extends Controller
             ], 422);
         }
 
+        $userId = Auth::id();
+        $tanggal = $request->tanggal;
+
+        // 🔴 CEK: apakah sudah pernah mengajukan di tanggal yang sama
+        $cekIzin = PengajuanIzin::where('user_id', $userId)
+            ->where('tgl_presensi', $tanggal)
+            ->where('status_approved', '0') // status : menunggu
+            ->exists();
+
+        if ($cekIzin) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anda sudah mengajukan izin pada tanggal tersebut'
+            ], 422);
+        }
+
         // Mapping jenis izin ke ENUM status
         $status = $request->jenis_izin === 'izin' ? '1' : '2';
 
         // Simpan data
         PengajuanIzin::create([
-            'user_id'          => Auth::id(),
+            'user_id'          => $userId,
             'kode_izin'        => 'IZ-' . date('Ymd') . '-' . strtoupper(Str::random(4)),
-            'tgl_presensi'     => $request->tanggal,
+            'tgl_presensi'     => $tanggal,
             'status'           => $status,
             'keterangan'       => $request->keterangan,
             'status_approved'  => '0', // pending
@@ -69,6 +85,7 @@ class PengajuanIzinController extends Controller
             'message' => 'Pengajuan izin berhasil dikirim'
         ]);
     }
+
 
     /**
      * Display the specified resource.
