@@ -76,7 +76,12 @@ class DashboardController extends Controller
             ->count();
 
         if ($user->hasRole('admin')) {
-            return view('dashboard.admin.index');
+            return view('dashboard.admin.index', compact(
+                'jumlahPresensi',
+                'jumlahTerlambat',
+                'jumlahSakit',
+                'jumlahIzin'
+            ));
         }
 
         return view('dashboard.user.index', compact(

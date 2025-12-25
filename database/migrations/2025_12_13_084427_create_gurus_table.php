@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('gurus', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('user_id');
             $table->string('nama_guru');
             $table->string('gelar_depan')->nullable();
             $table->string('gelar_belakang')->nullable();
