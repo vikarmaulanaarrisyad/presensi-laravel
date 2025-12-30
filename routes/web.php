@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\{
     DashboardController,
+    DepartemenController,
     GuruController,
+    MonitoringPresensiGuruController,
     PengajuanIzinController,
     PresensiController
 };
@@ -32,7 +34,6 @@ Route::group(['middleware' => ['auth']], function () {
         Route::put('pengajuan/izin/{izin}', 'update')->name('pengajuan.izin.update');
         Route::delete('pengajuan/izin/{izin}', 'destroy')->name('pengajuan.izin.destroy');
     });
-
     Route::controller(GuruController::class)->group(function () {
         Route::get('guru/data', 'data')->name('guru.data');
         Route::get('guru', 'index')->name('guru.index');
@@ -44,4 +45,19 @@ Route::group(['middleware' => ['auth']], function () {
         Route::put('guru/{id}', 'update')->name('guru.update');
         Route::delete('guru/{id}', 'destroy')->name('guru.destroy');
     });
+    Route::controller(DepartemenController::class)->group(function () {
+        Route::get('departemen/data', 'data')->name('departemen.data');
+        Route::get('departemen', 'index')->name('departemen.index');
+        Route::get('departemen/create', 'create')->name('departemen.create');
+        Route::post('/departemen/import-excel', 'importEXCEL')->name('departemen.import_excel');
+        Route::post('departemen', 'store')->name('departemen.store');
+        Route::get('departemen/{id}', 'show')->name('departemen.show');
+        Route::get('departemen/{id}/edit', 'edit')->name('departemen.edit');
+        Route::put('departemen/{id}', 'update')->name('departemen.update');
+        Route::delete('departemen/{id}', 'destroy')->name('departemen.destroy');
+    });
+
+    //Monitoring Presensi Guru
+    Route::get('/monitoring/presensi/guru/data', [MonitoringPresensiGuruController::class, 'data'])->name('monitoring.presensi_guru.data');
+    Route::get('/monitoring/presensi/guru', [MonitoringPresensiGuruController::class, 'index'])->name('monitoring.presensi_guru');
 });
