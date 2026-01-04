@@ -8,6 +8,11 @@
     <li class="breadcrumb-item active">@yield('title')</li>
 @endsection
 
+@push('css_vendor')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+@endpush
+
+
 @section('content')
     <div class="row">
         <div class="col-12">
@@ -48,11 +53,13 @@
                             <th width="5%">No</th>
                             <th>Nama Guru</th>
                             <th>Departemen</th>
+                            <th>Jabatan</th>
                             <th>Jam Masuk</th>
                             <th>Foto</th>
                             <th>Jam Pulang</th>
                             <th>Foto</th>
                             <th>Keterangan</th>
+                            <th>Aksi</th>
                         </x-slot>
                     </x-table>
 
@@ -70,10 +77,75 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="modal-map" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detail Lokasi Presensi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- MAP -->
+                        <div class="col-md-7">
+                            <div id="map" style="height: 400px;"></div>
+                        </div>
+
+                        <!-- INFO -->
+                        <div class="col-md-5">
+                            <table class="table table-sm table-bordered">
+                                <tr>
+                                    <th width="40%">Nama Guru</th>
+                                    <td id="info-nama"></td>
+                                </tr>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <td id="info-tanggal"></td>
+                                </tr>
+                                <tr>
+                                    <th>Jam Masuk</th>
+                                    <td id="info-jam-in"></td>
+                                </tr>
+                                <tr>
+                                    <th>Jam Pulang</th>
+                                    <td id="info-jam-out"></td>
+                                </tr>
+                                <tr>
+                                    <th>Status</th>
+                                    <td id="info-keterangan"></td>
+                                </tr>
+                                <tr>
+                                    <th>Koordinat</th>
+                                    <td id="info-koordinat"></td>
+                                </tr>
+                                <tr>
+                                    <th>Alamat</th>
+                                    <td id="info-alamat">Memuat...</td>
+                                </tr>
+                            </table>
+
+                            <a id="btn-gmaps" target="_blank" class="btn btn-success btn-sm w-100">
+                                <i class="fa fa-map"></i> Buka di Google Maps
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @include('includes.datatable')
 @include('includes.datepicker')
+
+@push('scripts')
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+@endpush
+
 
 @push('scripts')
     <script>
@@ -81,7 +153,9 @@
             let table = $('#table-presensi').DataTable({
                 processing: true,
                 serverSide: true,
-                ordering: false,
+                ordering: false, // ❌ matikan sorting
+                searching: false, // ❌ matikan search
+                lengthChange: false, // ❌ matikan dropdown show entries
                 ajax: {
                     url: "{{ url('/monitoring/presensi/guru/data') }}",
                     data: function(d) {
@@ -105,6 +179,10 @@
                         name: 'departemen'
                     },
                     {
+                        data: 'jabatan',
+                        name: 'jabatan'
+                    },
+                    {
                         data: 'jam_in',
                         name: 'jam_in'
                     },
@@ -124,6 +202,9 @@
                         data: 'keterangan',
                         name: 'keterangan'
                     },
+                    {
+                        data: 'aksi'
+                    },
                 ]
             });
 
@@ -141,6 +222,62 @@
         function previewImage(src) {
             $('#preview-img').attr('src', src);
             $('#modal-preview').modal('show');
+        }
+    </script>
+
+    <script>
+        let map, marker;
+
+        function showMap(data) {
+
+            $('#modal-map').modal('show');
+
+            // Isi informasi
+            $('#info-nama').text(data.nama);
+            $('#info-tanggal').text(data.tanggal);
+            $('#info-jam-in').text(data.jam_in ?? '-');
+            $('#info-jam-out').text(data.jam_out ?? '-');
+            $('#info-keterangan').html(data.status);
+            $('#info-koordinat').text(data.lat + ', ' + data.lng);
+
+            $('#btn-gmaps').attr(
+                'href',
+                `https://www.google.com/maps?q=${data.lat},${data.lng}`
+            );
+
+            $('#modal-map').on('shown.bs.modal', function() {
+
+                if (!map) {
+                    map = L.map('map').setView([data.lat, data.lng], 17);
+
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap'
+                    }).addTo(map);
+
+                    marker = L.marker([data.lat, data.lng]).addTo(map);
+                } else {
+                    map.invalidateSize();
+                    map.setView([data.lat, data.lng], 17);
+                    marker.setLatLng([data.lat, data.lng]);
+                }
+
+                marker.bindPopup(`
+                <strong>${data.nama}</strong><br>
+                ${data.tanggal}<br>
+                Jam Masuk: ${data.jam_in}<br>
+                Jam Pulang: ${data.jam_out}
+            `).openPopup();
+
+                // Reverse Geocoding
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${data.lat}&lon=${data.lng}`)
+                    .then(res => res.json())
+                    .then(res => {
+                        $('#info-alamat').text(res.display_name ?? '-');
+                    })
+                    .catch(() => {
+                        $('#info-alamat').text('-');
+                    });
+            });
         }
     </script>
 @endpush

@@ -45,7 +45,12 @@ class MonitoringPresensiGuruController extends Controller
             ->addColumn(
                 'departemen',
                 fn($row) =>
-                $row->departemen ?? '-'
+                $row->user?->guru?->departemen?->nama_dept ?? '-'
+            )
+            ->addColumn(
+                'jabatan',
+                fn($row) =>
+                $row->user?->guru?->jabatan?->nama_jab ?? '-'
             )
             ->addColumn(
                 'jam_in',
@@ -86,23 +91,80 @@ class MonitoringPresensiGuruController extends Controller
                     return '-';
                 }
 
-                // batas maksimal absen
                 $batas = \Carbon\Carbon::createFromTime(7, 0, 0);
                 $jamIn = \Carbon\Carbon::parse($row->jam_in);
 
-                if ($jamIn->greaterThan($batas)) {
-                    return '<span class="badge bg-danger">Terlambat</span>';
+                // Jika Tepat Waktu
+                if ($jamIn->lte($batas)) {
+                    return '<span class="badge bg-success">
+                    Tepat Waktu
+                </span>';
                 }
 
-                return '<span class="badge bg-success">Tepat Waktu</span>';
+                // Hitung keterlambatan
+                $diff = $batas->diff($jamIn);
+
+                $jam   = $diff->h;
+                $menit = $diff->i;
+
+                $textKeterlambatan = [];
+                if ($jam > 0) {
+                    $textKeterlambatan[] = $jam . ' jam';
+                }
+                if ($menit > 0) {
+                    $textKeterlambatan[] = $menit . ' menit';
+                }
+
+                return '<span class="badge bg-danger">
+                Terlambat
+            </span>
+            <br>
+            <small class="text-danger">
+                (' . implode(' ', $textKeterlambatan) . ')
+            </small>';
             })
+            ->addColumn('aksi', function ($row) {
+
+                if (!$row->location_in || !$row->jam_in) return '-';
+
+                [$lat, $lng] = explode(',', $row->location_in);
+
+                // Hitung status
+                $batas = \Carbon\Carbon::createFromTime(7, 0, 0);
+                $jamIn = \Carbon\Carbon::parse($row->jam_in);
+
+                if ($jamIn->lte($batas)) {
+                    $status = 'Tepat Waktu';
+                } else {
+                    $diff = $batas->diff($jamIn);
+                    $status = 'Terlambat ('
+                        . ($diff->h ? $diff->h . ' jam ' : '')
+                        . ($diff->i ? $diff->i . ' menit' : '')
+                        . ')';
+                }
+
+                return '
+                    <button class="btn btn-sm btn-info"
+                        onclick=\'showMap({
+                            lat: ' . $lat . ',
+                            lng: ' . $lng . ',
+                            nama: "' . $row->user->name . '",
+                            tanggal: "' . \Carbon\Carbon::parse($row->tgl_presensi)->format('d-m-Y') . '",
+                            jam_in: "' . $row->jam_in . '",
+                            jam_out: "' . ($row->jam_out ?? '-') . '",
+                            status: "' . $status . '"
+                        })\'>
+                        <i class="fa fa-map-marker"></i> Peta
+                    </button>';
+            })
+
             ->escapeColumns([])
             ->make(true);
     }
 
     public function getData($start, $end, $user_id = null)
     {
-        return Presensi::with('user')
+        return Presensi::with(['user.guru.departemen', 'user.guru.jabatan'])
             ->when($user_id, function ($q) use ($user_id) {
                 $q->where('user_id', $user_id); // 👈 FILTER GURU
             })
