@@ -154,11 +154,8 @@
                     loopForm(response.data);
 
                     setTimeout(() => {
-                        initMap(
-                            response.data.latitude,
-                            response.data.longitude
-                        );
-                    }, 400);
+                        initMap(response.data.latitude, response.data.longitude);
+                    }, 300);
                 })
                 .fail(errors => {
                     Swal.close(); // Tutup loading jika terjadi error

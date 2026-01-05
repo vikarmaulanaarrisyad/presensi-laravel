@@ -50,10 +50,9 @@ class PresensiController extends Controller
         $guru = $user->guru;
 
         if (!$guru) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Akun belum terhubung dengan data guru'
-            ], 422);
+            return redirect()
+                ->route('dashboard')
+                ->with('error', 'Akun Anda belum terhubung dengan data guru. Silakan hubungi admin.');
         }
 
         $konfigurasi = KonfigurasiLokasi::where('departemen_id', $guru->departemen_id)->first();
