@@ -79,7 +79,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link">
+                            <a href="{{ route('jabatan.index') }}" class="nav-link">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Jabatan</p>
                             </a>
@@ -183,6 +183,24 @@
                         </li>
                     </ul>
                 </li>
+                {{--  SETTING LOKASI KANTOR  --}}
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-cogs"></i>
+                        <p>
+                            Konfigurasi
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('kantor.index') }}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Lokasi Kantor</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
                 {{-- LAPORAN --}}
                 <li class="nav-item">
                     <a href="#" class="nav-link">
@@ -194,9 +212,9 @@
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="#" class="nav-link">
+                            <a href="{{ route('laporan.presensi_guru') }}" class="nav-link">
                                 <i class="far fa-circle nav-icon"></i>
-                                <p>Laporan Harian</p>
+                                <p>Laporan Presensi Guru</p>
                             </a>
                         </li>
                         <li class="nav-item">

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\KonfigurasiLokasi;
 use App\Models\Presensi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +33,9 @@ class PresensiController extends Controller
             "Desember"
         ];
 
-        return view('presensi.index', compact('namaBulan'));
+        return view('presensi.index', compact(
+            'namaBulan',
+        ));
     }
 
     /**
@@ -41,14 +44,41 @@ class PresensiController extends Controller
     public function create()
     {
         $hariIni = date('Y-m-d');
-        $userId = Auth::user()->id;
-        $cekPresensi = Presensi::where('tgl_presensi', $hariIni)->where('user_id', $userId)->count();
-        return view('presensi.create', compact('cekPresensi'));
+        $user = Auth::user()->load('guru');
+        $cekPresensi = Presensi::where('tgl_presensi', $hariIni)->where('user_id', $user->id)->count();
+
+        $guru = $user->guru;
+
+        if (!$guru) {
+            return redirect()
+                ->route('dashboard')
+                ->with('error', 'Akun Anda belum terhubung dengan data guru. Silakan hubungi admin.');
+        }
+
+        $konfigurasi = KonfigurasiLokasi::where('departemen_id', $guru->departemen_id)->first();
+
+        if (!$konfigurasi) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Lokasi kantor belum dikonfigurasi'
+            ], 422);
+        }
+
+        // 🔹 pecah lokasi kantor
+        [$latKantor, $lngKantor] = array_map(
+            'floatval',
+            explode(',', $konfigurasi->lokasi_kantor)
+        );
+
+        return view('presensi.create', compact(
+            'cekPresensi',
+            'konfigurasi',
+            'latKantor',
+            'lngKantor',
+            'guru'
+        ));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         // =====================
@@ -70,38 +100,63 @@ class PresensiController extends Controller
         // =====================
         // DATA DASAR
         // =====================
-        $userId      = Auth::id();
+        $user = Auth::user()->load('guru');
+        $guru = $user->guru;
+
+        if (!$guru) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akun belum terhubung dengan data guru'
+            ], 422);
+        }
+
+        $userId      = $user->id;
         $tglPresensi = date('Y-m-d');
         $jamSekarang = date('H:i:s');
 
-        // 🔹 Koordinat kantor (CONTOH) ,
-        $latitudeKantor  = -6.9211923;
-        $longitudeKantor = 109.1686918;
+        // =====================
+        // KONFIGURASI LOKASI
+        // =====================
+        $konfigurasi = KonfigurasiLokasi::where('departemen_id', $guru->departemen_id)->first();
 
-        // 🔹 Lokasi user
-        $lokasiUser    = explode(",", $request->lokasi);
-        $latitudeUser  = $lokasiUser[0];
-        $longitudeUser = $lokasiUser[1];
+        if (!$konfigurasi) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Lokasi kantor belum dikonfigurasi'
+            ], 422);
+        }
+
+        // =====================
+        // PARSE LOKASI
+        // =====================
+        [$latKantor, $lngKantor] = array_map(
+            'floatval',
+            explode(',', $konfigurasi->lokasi_kantor)
+        );
+
+        [$latUser, $lngUser] = array_map(
+            'floatval',
+            explode(',', $request->lokasi)
+        );
 
         // =====================
         // HITUNG JARAK
         // =====================
-        $jarak  = $this->distance(
-            $latitudeKantor,
-            $longitudeKantor,
-            $latitudeUser,
-            $longitudeUser
+        $jarak = $this->distance(
+            $latKantor,
+            $lngKantor,
+            $latUser,
+            $lngUser
         );
 
-        $radiusUser = round($jarak['meters']); // jarak user (meter)
-        $radiusMax  = 50000; // batas radius (meter)
+        $jarakMeter = round($jarak['meters']);
+        $radiusMax  = $konfigurasi->radius;
 
-        // ❌ Jika di luar radius
-        if ($radiusUser > $radiusMax) {
+        if ($jarakMeter > $radiusMax) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Anda berada di luar radius absensi',
-                'jarak'   => $radiusUser . ' meter'
+                'jarak'   => $jarakMeter . ' meter'
             ], 403);
         }
 
@@ -113,7 +168,7 @@ class PresensiController extends Controller
             ->first();
 
         // =====================
-        // ABSENSI KELUAR
+        // ABSENSI PULANG
         // =====================
         if ($presensi) {
 

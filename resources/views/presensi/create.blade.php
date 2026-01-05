@@ -69,6 +69,10 @@
 
 @push('scripts')
     <script>
+        let LAT_KANTOR = {{ $latKantor }};
+        let LNG_KANTOR = {{ $lngKantor }};
+        let RADIUS_MAX = {{ $konfigurasi->radius }}; // meter
+
         Webcam.set({
             height: 480,
             width: 640,
@@ -90,21 +94,37 @@
 
             lokasi.value = latitude + ',' + longitude;
 
-            let map = L.map('map').setView([latitude, longitude], 16)
+            // init map (fokus ke kantor)
+            let map = L.map('map').setView([LAT_KANTOR, LNG_KANTOR], 16);
 
             L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                attribution: '&copy; OpenStreetMap'
             }).addTo(map);
 
-            var marker = L.marker([latitude, longitude]).addTo(map);
+            // 🏢 marker kantor
+            L.marker([LAT_KANTOR, LNG_KANTOR])
+                .addTo(map)
+                .bindPopup("Lokasi Kantor")
+                .openPopup();
 
-            var circle = L.circle([latitude, longitude], {
-                color: 'red',
-                fillColor: '#f03',
-                fillOpacity: 0.5,
-                radius: 20
+            // 🔴 radius kantor (dari konfigurasi)
+            L.circle([LAT_KANTOR, LNG_KANTOR], {
+                color: 'green',
+                fillColor: '#00ff00',
+                fillOpacity: 0.1,
+                radius: RADIUS_MAX
             }).addTo(map);
+
+            // 👤 marker user
+            L.marker([latitude, longitude], {
+                    icon: L.icon({
+                        iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
+                        iconSize: [16, 16]
+                    })
+                }).addTo(map)
+                .bindPopup("Posisi Anda")
+                .openPopup();
         }
 
         function errorCallback(error) {

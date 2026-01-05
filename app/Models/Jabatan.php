@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-class Departemen extends Model
+class Jabatan extends Model
 {
-    public function gurus()
+    public function guru()
     {
         return $this->hasMany(Guru::class);
     }

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Imports\GuruImport;
+use App\Models\Departemen;
 use App\Models\Guru;
+use App\Models\Jabatan;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,12 +20,15 @@ class GuruController extends Controller
      */
     public function index()
     {
-        return view('guru.index');
+        $departemens = Departemen::orderBy('nama_dept')->get();
+        $jabatans = Jabatan::orderBy('nama_jab')->get();
+
+        return view('guru.index', compact('departemens', 'jabatans'));
     }
 
     public function data()
     {
-        $query = Guru::all();
+        $query = Guru::with(['departemen', 'jabatan']);
         return datatables($query)
             ->addIndexColumn()
             ->editColumn('nama_guru', function ($q) {
@@ -35,6 +40,17 @@ class GuruController extends Controller
 
                 return $nama;
             })
+            ->addColumn('departemen', function ($q) {
+                return $q->departemen
+                    ? '<span class="badge badge-info">' . $q->departemen->nama_dept . '</span>'
+                    : '<span class="badge badge-secondary">Belum Ada</span>';
+            })
+
+            ->addColumn('jabatan', function ($q) {
+                return $q->jabatan
+                    ? '<span class="badge badge-success">' . $q->jabatan->nama_jab . '</span>'
+                    : '<span class="badge badge-secondary">Belum Ada</span>';
+            })
             ->editColumn('ttl', function ($q) {
                 return $q->tempat_lahir . ', ' . tanggal_indonesia($q->tgl_lahir);
             })
@@ -43,12 +59,16 @@ class GuruController extends Controller
             })
             ->addColumn('action', function ($q) {
                 return '
-            <button onclick="editForm(`' . route('guru.show', $q->id) . '`)" class="btn btn-sm" style="background-color:#6755a5; color:#fff;" title="Edit">
-                <i class="fa fa-pencil-alt"></i>
-            </button>
-            <button onclick="deleteData(`' . route('guru.destroy', $q->id) . '`,`' . $q->phase_name . '`)" class="btn btn-sm" style="background-color:#d81b60; color:#fff;" title="Delete">
-                <i class="fa fa-trash"></i>
-            </button>
+                    <button class="btn btn-sm btn-warning"
+                        onclick="penempatanGuru(`' . route('guru.penempatan.edit', $q->id) . '`)">
+                        <i class="fas fa-sitemap"></i>
+                    </button>
+                    <button onclick="editForm(`' . route('guru.show', $q->id) . '`)" class="btn btn-sm" style="background-color:#6755a5; color:#fff;" title="Edit">
+                        <i class="fa fa-pencil-alt"></i>
+                    </button>
+                    <button onclick="deleteData(`' . route('guru.destroy', $q->id) . '`,`' . $q->phase_name . '`)" class="btn btn-sm" style="background-color:#d81b60; color:#fff;" title="Delete">
+                        <i class="fa fa-trash"></i>
+                    </button>
             ';
             })
             ->escapeColumns([])
@@ -143,9 +163,12 @@ class GuruController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Guru $guru)
+    public function edit($id)
     {
-        //
+        $guru = Guru::findOrfail($id);
+        return response()->json([
+            'data' => $guru->load(['user'])
+        ]);
     }
 
     /**
@@ -275,5 +298,33 @@ class GuruController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function updatePenempatan(Request $request, $id)
+    {
+        $guru = Guru::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'departemen_id' => 'required|exists:departemens,id',
+            'jabatan_id'    => 'required|exists:jabatans,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => 'error',
+                'errors'  => $validator->errors(),
+                'message' => 'Data penempatan tidak valid.'
+            ], 422);
+        }
+
+        $guru->update([
+            'departemen_id' => $request->departemen_id,
+            'jabatan_id'    => $request->jabatan_id,
+        ]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Penempatan guru berhasil diperbarui.'
+        ]);
     }
 }

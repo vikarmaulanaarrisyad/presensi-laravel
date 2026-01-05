@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Data Guru')
+@section('title', 'Data Jabatan')
 
 @section('breadcrumb')
     @parent
-    <li class="breadcrumb-item active">Manajemen Guru</li>
+    <li class="breadcrumb-item active">Manajemen Departemen</li>
     <li class="breadcrumb-item active">@yield('title')</li>
 @endsection
 
@@ -13,37 +13,24 @@
         <div class="col-lg-12 col-12 col-md-12">
             <x-card>
                 <x-slot name="header">
-                    <button onclick="addForm(`{{ route('guru.store') }}`)" class="btn btn-sm btn-info">
+                    <button onclick="addForm(`{{ route('jabatan.store') }}`)" class="btn btn-sm btn-info">
                         <i class="fas fa-plus-circle"></i>
                         Tambah Data
-                    </button>
-
-                    <button onclick="confirmImport()" type="button" class="btn btn-success btn-sm">
-                        <i class="fas fa-file-excel"></i>
-                        Import Excel
                     </button>
                 </x-slot>
 
                 <x-table>
                     <x-slot name="thead">
                         <th width="5%">NO</th>
-                        <th>Nama Lengkap</th>
-                        <th>Nama Departemen</th>
-                        <th>Jabatan</th>
-                        <th>L/P</th>
-                        <th>TTL</th>
-                        <th>No Hp</th>
-                        <th>TMT</th>
-                        <th width="13%">Aksi</th>
+                        <th>Nama Jabatan</th>
+                        <th width="15%">Aksi</th>
                     </x-slot>
                 </x-table>
             </x-card>
         </div>
     </div>
 
-    @include('guru.form')
-    @include('guru.import-excel')
-    @include('guru.penempatan-modal')
+    @include('jabatan.form')
 @endsection
 
 @include('includes.datatable')
@@ -61,7 +48,7 @@
             autoWidth: false,
             responsive: true,
             ajax: {
-                url: '{{ route('guru.data') }}',
+                url: '{{ route('jabatan.data') }}',
             },
             columns: [{
                     data: 'DT_RowIndex',
@@ -70,37 +57,7 @@
                     searchable: false
                 },
                 {
-                    data: 'nama_guru',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'departemen',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'jabatan',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'jenis_kelamin',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'ttl',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'no_hp',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'tgl_tmt',
+                    data: 'nama_jab',
                     orderable: false,
                     searchable: false
                 },
@@ -112,7 +69,7 @@
             ]
         })
 
-        function addForm(url, title = 'Form Guru') {
+        function addForm(url, title = 'Form Jabatan') {
             $(modal).modal('show');
             $(`${modal} .modal-title`).text(title);
             $(`${modal} form`).attr('action', url);
@@ -121,7 +78,7 @@
             resetForm(`${modal} form`);
         }
 
-        function editForm(url, title = 'Form Guru') {
+        function editForm(url, title = 'Form Jabatan') {
             Swal.fire({
                 title: "Memuat...",
                 text: "Mohon tunggu sebentar...",
@@ -288,76 +245,5 @@
         function confirmImport() {
             $(importExcel).modal('show');
         }
-    </script>
-
-    <script>
-        let modalPenempatan = '#modal-penempatan';
-
-        function penempatanGuru(url) {
-            Swal.fire({
-                title: 'Memuat...',
-                text: 'Mengambil data penempatan',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
-            $.get(url)
-                .done(res => {
-                    Swal.close();
-
-                    $(modalPenempatan).modal('show');
-                    $('#form-penempatan').attr('action', url);
-
-                    // isi data
-                    $('#namaGuru').val(res.data.user.name);
-                    $('[name=departemen_id]').val(res.data.departemen_id);
-                    $('[name=jabatan_id]').val(res.data.jabatan_id);
-                })
-                .fail(() => {
-                    Swal.fire('Error', 'Gagal memuat data', 'error');
-                });
-        }
-
-        $('#form-penempatan').on('submit', function(e) {
-            e.preventDefault();
-
-            Swal.fire({
-                title: 'Menyimpan...',
-                text: 'Mohon tunggu sebentar',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
-            $.ajax({
-                url: $(this).attr('action'),
-                type: 'POST',
-                data: $(this).serialize(),
-                success: function(res) {
-                    Swal.close();
-
-                    // ✅ tutup modal
-                    $(modalPenempatan).modal('hide');
-
-                    // ✅ reload DataTable (tetap di halaman)
-                    table.ajax.reload(null, false);
-
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil',
-                        text: res.message,
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                },
-                error: function(xhr) {
-                    Swal.close();
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Gagal',
-                        text: xhr.responseJSON?.message || 'Terjadi kesalahan'
-                    });
-                }
-            });
-        });
     </script>
 @endpush

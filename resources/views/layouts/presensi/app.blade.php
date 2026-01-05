@@ -53,7 +53,16 @@
     <!-- * App Bottom Menu -->
 
     @include('layouts.presensi.scripts')
-
+    @if (session('error'))
+        <script>
+            Swal.fire({
+                icon: 'warning',
+                title: 'Akses Ditolak',
+                text: "{{ session('error') }}",
+                confirmButtonText: 'OK'
+            });
+        </script>
+    @endif
 </body>
 
 </html>

@@ -1,54 +1,80 @@
 @extends('layouts.app')
 
-@section('title', 'Data Guru')
+@section('title', 'Lokasi Kantor')
 
 @section('breadcrumb')
     @parent
-    <li class="breadcrumb-item active">Manajemen Guru</li>
+    <li class="breadcrumb-item active">Konfigurasi</li>
     <li class="breadcrumb-item active">@yield('title')</li>
 @endsection
+
+@push('css_vendor')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+@endpush
+
+@push('css')
+    <style>
+        #map {
+            height: 250px;
+            width: 100%;
+            border-radius: 10px;
+        }
+    </style>
+@endpush
 
 @section('content')
     <div class="row">
         <div class="col-lg-12 col-12 col-md-12">
             <x-card>
                 <x-slot name="header">
-                    <button onclick="addForm(`{{ route('guru.store') }}`)" class="btn btn-sm btn-info">
+                    <button onclick="addForm(`{{ route('kantor.store') }}`)" class="btn btn-sm btn-info">
                         <i class="fas fa-plus-circle"></i>
                         Tambah Data
-                    </button>
-
-                    <button onclick="confirmImport()" type="button" class="btn btn-success btn-sm">
-                        <i class="fas fa-file-excel"></i>
-                        Import Excel
                     </button>
                 </x-slot>
 
                 <x-table>
                     <x-slot name="thead">
                         <th width="5%">NO</th>
-                        <th>Nama Lengkap</th>
                         <th>Nama Departemen</th>
-                        <th>Jabatan</th>
-                        <th>L/P</th>
-                        <th>TTL</th>
-                        <th>No Hp</th>
-                        <th>TMT</th>
-                        <th width="13%">Aksi</th>
+                        <th>Lokasi Kantor</th>
+                        <th>Radius (Meter)</th>
+                        <th width="15%">Aksi</th>
                     </x-slot>
                 </x-table>
             </x-card>
         </div>
     </div>
 
-    @include('guru.form')
-    @include('guru.import-excel')
-    @include('guru.penempatan-modal')
+    <x-modal id="modal-map" size="modal-lg">
+        <x-slot name="title">
+            Lokasi Kantor / Departemen
+        </x-slot>
+
+        <div class="mb-2">
+            <strong>Departemen:</strong>
+            <span id="map-departemen"></span>
+        </div>
+
+        <div id="map-view" style="height:400px;border-radius:10px;"></div>
+
+        <x-slot name="footer">
+            <button type="button" data-dismiss="modal" class="btn btn-sm btn-secondary">
+                Tutup
+            </button>
+        </x-slot>
+    </x-modal>
+
+
+    @include('lokasikantor.form')
 @endsection
 
 @include('includes.datatable')
 
 @push('scripts')
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         let table;
         let modal = '#modal-form';
@@ -61,7 +87,7 @@
             autoWidth: false,
             responsive: true,
             ajax: {
-                url: '{{ route('guru.data') }}',
+                url: '{{ route('kantor.data') }}',
             },
             columns: [{
                     data: 'DT_RowIndex',
@@ -70,37 +96,17 @@
                     searchable: false
                 },
                 {
-                    data: 'nama_guru',
+                    data: 'nama_dept',
                     orderable: false,
                     searchable: false
                 },
                 {
-                    data: 'departemen',
+                    data: 'lokasi_kantor',
                     orderable: false,
                     searchable: false
                 },
                 {
-                    data: 'jabatan',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'jenis_kelamin',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'ttl',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'no_hp',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'tgl_tmt',
+                    data: 'radius',
                     orderable: false,
                     searchable: false
                 },
@@ -112,16 +118,20 @@
             ]
         })
 
-        function addForm(url, title = 'Form Guru') {
+        function addForm(url, title = 'Form Konfigurasi Lokasi Kantor') {
             $(modal).modal('show');
             $(`${modal} .modal-title`).text(title);
             $(`${modal} form`).attr('action', url);
             $(`${modal} [name=_method]`).val('post');
 
             resetForm(`${modal} form`);
+
+            setTimeout(() => {
+                initMap();
+            }, 400);
         }
 
-        function editForm(url, title = 'Form Guru') {
+        function editForm(url, title = 'Form Konfigurasi Lokasi Kantor') {
             Swal.fire({
                 title: "Memuat...",
                 text: "Mohon tunggu sebentar...",
@@ -142,6 +152,10 @@
 
                     resetForm(`${modal} form`);
                     loopForm(response.data);
+
+                    setTimeout(() => {
+                        initMap(response.data.latitude, response.data.longitude);
+                    }, 300);
                 })
                 .fail(errors => {
                     Swal.close(); // Tutup loading jika terjadi error
@@ -289,14 +303,146 @@
             $(importExcel).modal('show');
         }
     </script>
-
     <script>
-        let modalPenempatan = '#modal-penempatan';
+        let map;
+        let marker;
+        let geocoder;
 
-        function penempatanGuru(url) {
+        function initMap(lat = -6.879704, lng = 109.125595) {
+
+            if (map) {
+                map.remove();
+            }
+
+            map = L.map('map').setView([lat, lng], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            marker = L.marker([lat, lng], {
+                draggable: true
+            }).addTo(map);
+
+            updateLatLng(lat, lng);
+
+            // Klik peta
+            map.on('click', function(e) {
+                marker.setLatLng(e.latlng);
+                updateLatLng(e.latlng.lat, e.latlng.lng);
+            });
+
+            // Drag marker
+            marker.on('dragend', function(e) {
+                const pos = e.target.getLatLng();
+                updateLatLng(pos.lat, pos.lng);
+            });
+
+            // Geocoder
+            geocoder = L.Control.geocoder({
+                    defaultMarkGeocode: false,
+                    placeholder: 'Cari alamat...'
+                })
+                .on('markgeocode', function(e) {
+                    const center = e.geocode.center;
+
+                    map.setView(center, 17);
+                    marker.setLatLng(center);
+
+                    updateLatLng(center.lat, center.lng);
+                    $('#alamat').val(e.geocode.name); // opsional simpan alamat
+                })
+                .addTo(map);
+
+            // FIX ukuran map di modal
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 300);
+        }
+
+        function updateLatLng(lat, lng) {
+            $('#latitude').val(lat.toFixed(7));
+            $('#longitude').val(lng.toFixed(7));
+        }
+
+        function getMyLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    map.setView([lat, lng], 17);
+                    marker.setLatLng([lat, lng]);
+                    updateLatLng(lat, lng);
+                });
+            } else {
+                alert("Geolocation tidak didukung browser ini");
+            }
+        }
+
+        // ============================
+        // SEARCH ADDRESS (CUSTOM INPUT)
+        // ============================
+        function searchAddress() {
+            const query = $('#search-address').val();
+
+            if (!query) {
+                Swal.fire('Info', 'Masukkan alamat terlebih dahulu', 'info');
+                return;
+            }
+
             Swal.fire({
-                title: 'Memuat...',
-                text: 'Mengambil data penempatan',
+                title: 'Mencari lokasi...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            $.get('https://nominatim.openstreetmap.org/search', {
+                    q: query,
+                    format: 'json',
+                    limit: 1
+                })
+                .done(res => {
+                    Swal.close();
+
+                    if (res.length === 0) {
+                        Swal.fire('Tidak ditemukan', 'Alamat tidak ditemukan', 'warning');
+                        return;
+                    }
+
+                    const lat = parseFloat(res[0].lat);
+                    const lng = parseFloat(res[0].lon);
+
+                    map.setView([lat, lng], 17);
+                    marker.setLatLng([lat, lng]);
+                    updateLatLng(lat, lng);
+
+                    // Simpan alamat hasil
+                    $('#alamat').val(res[0].display_name);
+                })
+                .fail(() => {
+                    Swal.close();
+                    Swal.fire('Error', 'Gagal mencari alamat', 'error');
+                });
+        }
+
+        // ENTER untuk search
+        $('#search-address').on('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                searchAddress();
+            }
+        });
+    </script>
+    <script>
+        let viewMap;
+        let viewMarker;
+        let viewCircle;
+
+        function showMap(url) {
+
+            Swal.fire({
+                title: 'Memuat peta...',
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading()
             });
@@ -304,60 +450,61 @@
             $.get(url)
                 .done(res => {
                     Swal.close();
+                    $('#modal-map').modal('show');
 
-                    $(modalPenempatan).modal('show');
-                    $('#form-penempatan').attr('action', url);
+                    $('#map-departemen').text(res.data.departemen.nama_dept);
 
-                    // isi data
-                    $('#namaGuru').val(res.data.user.name);
-                    $('[name=departemen_id]').val(res.data.departemen_id);
-                    $('[name=jabatan_id]').val(res.data.jabatan_id);
+                    const coord = parseLatLng(res.data.lokasi_kantor);
+
+                    setTimeout(() => {
+                        initViewMap(
+                            coord.lat,
+                            coord.lng,
+                            res.data.radius
+                        );
+                    }, 300);
                 })
                 .fail(() => {
-                    Swal.fire('Error', 'Gagal memuat data', 'error');
+                    Swal.fire('Error', 'Gagal memuat lokasi', 'error');
                 });
         }
 
-        $('#form-penempatan').on('submit', function(e) {
-            e.preventDefault();
+        function parseLatLng(lokasi) {
+            let split = lokasi.split(',');
+            return {
+                lat: parseFloat(split[0].trim()),
+                lng: parseFloat(split[1].trim())
+            };
+        }
 
-            Swal.fire({
-                title: 'Menyimpan...',
-                text: 'Mohon tunggu sebentar',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
+        function initViewMap(lat, lng, radius) {
 
-            $.ajax({
-                url: $(this).attr('action'),
-                type: 'POST',
-                data: $(this).serialize(),
-                success: function(res) {
-                    Swal.close();
+            if (viewMap) {
+                viewMap.remove();
+            }
 
-                    // ✅ tutup modal
-                    $(modalPenempatan).modal('hide');
+            viewMap = L.map('map-view', {
+                zoomControl: true,
+                dragging: true,
+                scrollWheelZoom: true
+            }).setView([lat, lng], 16);
 
-                    // ✅ reload DataTable (tetap di halaman)
-                    table.ajax.reload(null, false);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(viewMap);
 
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil',
-                        text: res.message,
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                },
-                error: function(xhr) {
-                    Swal.close();
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Gagal',
-                        text: xhr.responseJSON?.message || 'Terjadi kesalahan'
-                    });
-                }
-            });
-        });
+            viewMarker = L.marker([lat, lng]).addTo(viewMap);
+
+            viewCircle = L.circle([lat, lng], {
+                radius: radius,
+                color: '#28a745',
+                fillColor: '#28a745',
+                fillOpacity: 0.25
+            }).addTo(viewMap);
+
+            setTimeout(() => {
+                viewMap.invalidateSize();
+            }, 300);
+        }
     </script>
 @endpush
