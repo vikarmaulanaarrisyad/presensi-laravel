@@ -29,7 +29,7 @@ class PersetujuanIzinGuruController extends Controller
                 'user:id',
                 'user.guru:id,user_id,nama_guru,departemen_id',
                 'user.guru.departemen:id,nama_dept'
-            ]);
+            ])->orderBy('id', 'desc');
 
         return DataTables::of($query)
             ->addIndexColumn()
