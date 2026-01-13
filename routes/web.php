@@ -5,6 +5,7 @@ use App\Http\Controllers\{
     DepartemenController,
     GuruController,
     JabatanController,
+    JamKerjaController,
     KonfigurasiLokasiController,
     LaporanPresensiGuruController,
     MonitoringPresensiGuruController,
@@ -104,5 +105,17 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/persetujuan/izin-guru/{id}/batal', 'batalApprove');
         // Route::post('persetujuan/izin-guru/{id}/setujui', 'setujui')->name('persetujuan.setujui');
         Route::post('persetujuan/izin-guru/{id}/tolak', 'tolak')->name('persetujuan.tolak');
+    });
+
+    // Jam Kerja
+    Route::controller(JamKerjaController::class)->group(function () {
+        Route::get('/setting/jamkerja', 'index')->name('jamkerja.index');
+        Route::get('/setting/jamkerja/data', 'data')->name('jamkerja.data');
+        Route::get('/setting/jamkerja/create', 'create')->name('jamkerja.create');
+        Route::post('/setting/jamkerja', 'store')->name('jamkerja.store');
+        Route::get('/setting/jamkerja/{id}', 'show')->name('jamkerja.show');
+        Route::get('/setting/jamkerja/{id}/edit', 'edit')->name('jamkerja.edit');
+        Route::put('/setting/jamkerja/{id}', 'update')->name('jamkerja.update');
+        Route::delete('/setting/jamkerja/{id}', 'destroy')->name('jamkerja.destroy');
     });
 });
