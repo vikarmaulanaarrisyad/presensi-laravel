@@ -9,6 +9,7 @@ use App\Http\Controllers\{
     LaporanPresensiGuruController,
     MonitoringPresensiGuruController,
     PengajuanIzinController,
+    PersetujuanIzinGuruController,
     PresensiController
 };
 use Illuminate\Support\Facades\Route;
@@ -91,5 +92,17 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('lokasi/kantor/{id}/edit', 'edit')->name('kantor.edit');
         Route::put('lokasi/kantor/{id}', 'update')->name('kantor.update');
         Route::delete('lokasi/kantor/{id}', 'destroy')->name('kantor.destroy');
+    });
+
+    // Persetujuan Izin Sakit Guru
+    Route::controller(PersetujuanIzinGuruController::class)->group(function () {
+        Route::get('persetujuan/izin-guru', 'index')->name('persetujuan.index');
+        Route::get('persetujuan/izin-guru/data', 'data')->name('persetujuan.data');
+        Route::get('persetujuan/izin-guru/{id}', 'show')->name('persetujuan.show');
+        Route::get('persetujuan/izin-guru/{id}/alasan', 'alasan')->name('persetujuan.alasan');
+        Route::post('/persetujuan/izin-guru/{id}/approve', 'approve')->name('persetujuan.setujui');
+        Route::post('/persetujuan/izin-guru/{id}/batal', 'batalApprove');
+        // Route::post('persetujuan/izin-guru/{id}/setujui', 'setujui')->name('persetujuan.setujui');
+        Route::post('persetujuan/izin-guru/{id}/tolak', 'tolak')->name('persetujuan.tolak');
     });
 });
