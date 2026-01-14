@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Seting Jam Kerja')
+@section('title', 'Setting Jam Kerja')
 
 @section('breadcrumb')
     @parent
@@ -29,21 +29,23 @@
                 <form id="formSettingJamKerja" action="{{ route('konfigurasi-jamkerja.store', $guru->user->id) }}"
                     method="POST">
                     @csrf
+
                     {{-- ================= SETTING JAM KERJA ================= --}}
                     <div class="d-flex justify-content-end mb-2">
                         <button type="button" class="btn btn-sm btn-secondary" onclick="copySenin()">
                             <i class="fas fa-copy"></i> Copy Senin ke Semua Hari
                         </button>
                     </div>
+
                     <div class="row">
+                        {{-- ================= INFO GURU ================= --}}
                         <div class="col-lg-6">
                             <div class="row mb-3">
-
                                 <div class="col-md-3 text-center">
                                     <img src="{{ $guru->foto ?? asset('assets/img/avatar.png') }}"
                                         class="img-thumbnail mb-2" style="width:120px;height:120px;object-fit:cover;">
                                 </div>
-                                {{-- ================= INFO GURU ================= --}}
+
                                 <div class="col-md-9">
                                     <x-table>
                                         <tr>
@@ -63,10 +65,11 @@
                                             <td>: <span class="badge bg-success">Aktif</span></td>
                                         </tr>
                                     </x-table>
-
                                 </div>
                             </div>
                         </div>
+
+                        {{-- ================= JAM KERJA ================= --}}
                         <div class="col-lg-6">
                             <x-table>
                                 <x-slot name="thead">
@@ -76,19 +79,23 @@
                                     <th>Jam Kerja</th>
                                 </x-slot>
 
-                                <tbody>
-                                    @php
-                                        $hari = [
-                                            'senin' => 'Senin',
-                                            'selasa' => 'Selasa',
-                                            'rabu' => 'Rabu',
-                                            'kamis' => 'Kamis',
-                                            'jumat' => 'Jumat',
-                                            'sabtu' => 'Sabtu',
-                                            'minggu' => 'Minggu',
-                                        ];
-                                    @endphp
+                                @php
+                                    $hari = [
+                                        'senin' => 'Senin',
+                                        'selasa' => 'Selasa',
+                                        'rabu' => 'Rabu',
+                                        'kamis' => 'Kamis',
+                                        'jumat' => 'Jumat',
+                                        'sabtu' => 'Sabtu',
+                                        'minggu' => 'Minggu',
+                                    ];
 
+                                    // ANTI ERROR
+                                    $existing = $existing ?? [];
+                                    $libur = $libur ?? [];
+                                @endphp
+
+                                <tbody>
                                     @foreach ($hari as $key => $label)
                                         <tr>
                                             <td>{{ $loop->iteration }}</td>
@@ -124,7 +131,6 @@
                             </x-table>
                         </div>
                     </div>
-
                 </form>
             </x-card>
         </div>
@@ -198,22 +204,15 @@
                         .then(res => res.json())
                         .then(res => {
                             if (res.status) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Berhasil',
-                                    text: res.message ?? 'Jam kerja berhasil disimpan',
-                                    confirmButtonText: 'OK'
-                                }).then(() => {
-                                    window.location.href = "{{ route('guru.index') }}";
-                                });
+                                Swal.fire('Berhasil', res.message, 'success')
+                                    .then(() => window.location.href = "{{ route('guru.index') }}");
                             } else {
-                                Swal.fire('Gagal', res.message ?? 'Terjadi kesalahan', 'error');
+                                Swal.fire('Gagal', res.message, 'error');
                             }
                         })
                         .catch(() => {
                             Swal.fire('Error', 'Gagal menyimpan data', 'error');
                         });
-
                 }
             });
         }

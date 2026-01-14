@@ -101,10 +101,34 @@ class KonfigurasiJamkerjaController extends Controller
      */
     public function edit($id)
     {
-        $guru = Guru::with('user')->where('id', $id)->first();
-        $jamKerja = JamKerja::all();
-        return view('jamkerja.setjamkerja', compact('guru', 'jamKerja'));
+        $guru = Guru::with('user')->where('id', $id)->firstOrFail();
+
+        $jamKerja = JamKerja::orderBy('nama_jam_kerja')->get();
+
+        // Ambil setting jam kerja guru
+        $setting = KonfigurasiJamkerja::where('user_id', $guru->user->id)->get();
+
+        // Jam kerja per hari (untuk selected option)
+        $existing = $setting
+            ->where('libur', 0)
+            ->pluck('jam_kerja_id', 'hari')
+            ->toArray();
+
+        // Hari libur (untuk checkbox)
+        $libur = $setting
+            ->where('libur', 1)
+            ->pluck('libur', 'hari')
+            ->map(fn() => true)
+            ->toArray();
+
+        return view('jamkerja.setjamkerja', compact(
+            'guru',
+            'jamKerja',
+            'existing',
+            'libur'
+        ));
     }
+
 
     /**
      * Update the specified resource in storage.
