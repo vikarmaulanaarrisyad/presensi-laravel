@@ -63,6 +63,10 @@ class GuruController extends Controller
                         onclick="penempatanGuru(`' . route('guru.penempatan.edit', $q->id) . '`)">
                         <i class="fas fa-sitemap"></i>
                     </button>
+                    <button class="btn btn-sm btn-info"
+                        onclick="settingJamKerja(`' . route('konfigurasi-jamkerja.edit', $q->id) . '`)">
+                        <i class="fas fa-clock"></i>
+                    </button>
                     <button onclick="editForm(`' . route('guru.show', $q->id) . '`)" class="btn btn-sm" style="background-color:#6755a5; color:#fff;" title="Edit">
                         <i class="fa fa-pencil-alt"></i>
                     </button>

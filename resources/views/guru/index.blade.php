@@ -360,4 +360,41 @@
             });
         });
     </script>
+
+    <script>
+        function settingJamKerja(url) {
+            Swal.fire({
+                title: 'Setting Jam Kerja',
+                text: 'Anda akan membuka pengaturan jam kerja guru ini',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, lanjutkan',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33'
+            }).then((result) => {
+                if (result.isConfirmed) {
+
+                    Swal.fire({
+                        title: 'Memuat...',
+                        text: 'Menyiapkan pengaturan jam kerja',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    setTimeout(() => {
+                        window.location.href = url;
+                    }, 600);
+                }
+            });
+        }
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => Swal.close());
+        window.addEventListener('pageshow', () => Swal.close());
+    </script>
 @endpush

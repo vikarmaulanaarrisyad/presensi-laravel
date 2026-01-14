@@ -2,8 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Guru;
+use App\Models\JamKerja;
 use App\Models\KonfigurasiJamkerja;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class KonfigurasiJamkerjaController extends Controller
 {
@@ -26,9 +31,61 @@ class KonfigurasiJamkerjaController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, $guruId)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'hari' => 'required|array',
+            'jam_kerja_id' => 'nullable|array',
+            'libur' => 'nullable|array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($request->hari as $hari) {
+
+                $isLibur = isset($request->libur[$hari]);
+
+                KonfigurasiJamkerja::updateOrCreate(
+                    // 🔑 key pencarian
+                    [
+                        'user_id' => $guruId,
+                        'hari' => $hari,
+                    ],
+                    // ✏️ data update / insert
+                    [
+                        'libur' => $isLibur,
+                        'jam_kerja_id' => $isLibur
+                            ? null
+                            : ($request->jam_kerja_id[$hari] ?? null),
+                    ]
+                );
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Konfigurasi jam kerja berhasil disimpan'
+            ]);
+        } catch (\Throwable $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Terjadi kesalahan saat menyimpan data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -42,10 +99,36 @@ class KonfigurasiJamkerjaController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(KonfigurasiJamkerja $konfigurasiJamkerja)
+    public function edit($id)
     {
-        //
+        $guru = Guru::with('user')->where('id', $id)->firstOrFail();
+
+        $jamKerja = JamKerja::orderBy('nama_jam_kerja')->get();
+
+        // Ambil setting jam kerja guru
+        $setting = KonfigurasiJamkerja::where('user_id', $guru->user->id)->get();
+
+        // Jam kerja per hari (untuk selected option)
+        $existing = $setting
+            ->where('libur', 0)
+            ->pluck('jam_kerja_id', 'hari')
+            ->toArray();
+
+        // Hari libur (untuk checkbox)
+        $libur = $setting
+            ->where('libur', 1)
+            ->pluck('libur', 'hari')
+            ->map(fn() => true)
+            ->toArray();
+
+        return view('jamkerja.setjamkerja', compact(
+            'guru',
+            'jamKerja',
+            'existing',
+            'libur'
+        ));
     }
+
 
     /**
      * Update the specified resource in storage.

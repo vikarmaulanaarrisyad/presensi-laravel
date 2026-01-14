@@ -6,6 +6,7 @@ use App\Http\Controllers\{
     GuruController,
     JabatanController,
     JamKerjaController,
+    KonfigurasiJamkerjaController,
     KonfigurasiLokasiController,
     LaporanPresensiGuruController,
     MonitoringPresensiGuruController,
@@ -108,14 +109,37 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     // Jam Kerja
-    Route::controller(JamKerjaController::class)->group(function () {
-        Route::get('/setting/jamkerja', 'index')->name('jamkerja.index');
-        Route::get('/setting/jamkerja/data', 'data')->name('jamkerja.data');
-        Route::get('/setting/jamkerja/create', 'create')->name('jamkerja.create');
-        Route::post('/setting/jamkerja', 'store')->name('jamkerja.store');
-        Route::get('/setting/jamkerja/{id}', 'show')->name('jamkerja.show');
-        Route::get('/setting/jamkerja/{id}/edit', 'edit')->name('jamkerja.edit');
-        Route::put('/setting/jamkerja/{id}', 'update')->name('jamkerja.update');
-        Route::delete('/setting/jamkerja/{id}', 'destroy')->name('jamkerja.destroy');
-    });
+    Route::prefix('setting/jamkerja')
+        ->name('jamkerja.')
+        ->controller(JamKerjaController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/data', 'data')->name('data');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{id}', 'show')->name('show');
+            Route::get('/{id}/edit', 'edit')->name('edit');
+            Route::put('/{id}', 'update')->name('update');
+            Route::delete('/{id}', 'destroy')->name('destroy');
+        });
+
+
+    // Konfigurasi Jam Kerja
+    Route::prefix('setting/konfigurasi-jamkerja')
+        ->name('konfigurasi-jamkerja.')
+        ->controller(KonfigurasiJamkerjaController::class)
+        ->group(function () {
+
+            Route::get('/', 'index')->name('index');
+            Route::get('/data', 'data')->name('data');
+
+            Route::get('/{guru}/edit', 'edit')->name('edit');
+
+            // ✅ store pakai guru
+            Route::post('/{guru}', 'store')->name('store');
+
+            Route::get('/{guru}', 'show')->name('show');
+            Route::put('/{guru}', 'update')->name('update');
+            Route::delete('/{guru}', 'destroy')->name('destroy');
+        });
 });
